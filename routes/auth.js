@@ -8,28 +8,28 @@ const router = express.Router();
 // REGISTER
 router.post("/register/user", async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, phone, password } = req.body;
 
-    // Email tekshirish
+    if (!firstName || !lastName || !email || !phone || !password) {
+      return res.status(400).json({ message: "Barcha maydonlarni to‘ldiring ❌" });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "Bu email allaqachon mavjud ❌" });
     }
 
-    // Passwordni hash qilish
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Foydalanuvchini yaratish
-    const newUser = new User({
+    const newUser = await User.create({
       firstName,
       lastName,
       email,
+      phone,                // 🔹 telefon kiritilmoqda
       password: hashedPassword,
       role: "customer",
     });
-    await newUser.save();
 
-    // JWT token yaratish
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
       process.env.JWT_SECRET,
@@ -44,7 +44,9 @@ router.post("/register/user", async (req, res) => {
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         email: newUser.email,
+        phone: newUser.phone,
         role: newUser.role,
+        createdAt: newUser.createdAt, // 🔹 endi albatta bo‘ladi
       },
     });
   } catch (error) {
@@ -81,7 +83,9 @@ router.post("/login", async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        phone: user.phone,
         role: user.role,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {

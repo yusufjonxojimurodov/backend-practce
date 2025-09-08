@@ -1,13 +1,10 @@
-import express from "express";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import User from "../models/register.users.js";
-
-const router = express.Router();
-
 router.post("/register/user", async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, phone, password } = req.body;
+
+    if (!firstName || !lastName || !email || !phone || !password) {
+      return res.status(400).json({ message: "Barcha maydonlarni to‘ldiring ❌" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -20,6 +17,7 @@ router.post("/register/user", async (req, res) => {
       firstName,
       lastName,
       email,
+      phone,                // 🔹 qo‘shildi
       password: hashedPassword,
       role: "customer",
     });
@@ -40,48 +38,12 @@ router.post("/register/user", async (req, res) => {
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         email: newUser.email,
+        phone: newUser.phone,        // 🔹 endi qaytadi
         role: newUser.role,
+        createdAt: newUser.createdAt // 🔹 endi qaytadi
       },
     });
   } catch (error) {
     res.status(500).json({ message: "Server xatosi ❌", error: error.message });
   }
 });
-
-router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "Email yoki parol noto‘g‘ri ❌" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Email yoki parol noto‘g‘ri ❌" });
-    }
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    res.status(200).json({
-      message: "Login muvaffaqiyatli ✅",
-      token,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server xatosi ❌", error: error.message });
-  }
-});
-
-export default router;
