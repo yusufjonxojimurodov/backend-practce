@@ -6,16 +6,16 @@ const userSchema = new mongoose.Schema(
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     phone: { type: String, required: true },
-    password: { type: String, required: true }, // 🔹 qo‘shildi
+    password: { type: String, required: true },
     role: {
       type: String,
       enum: ["customer", "seller", "admin"],
       default: "customer",
     },
-    image: { type: String, default: "" }, // 🔹 optional avatar
-    bio: { type: String, default: "" },   // 🔹 optional bio
+    image: { type: String, default: "" },
+    bio: { type: String, default: "" },
   },
-  { timestamps: true } // 🔹 createdAt, updatedAt avtomatik ishlaydi
+  { timestamps: true }
 );
 
 const User = mongoose.model("User", userSchema);
